@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Web2API Pool Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Source+Code+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg: #FAFAF9;
+      --surface: #F5F5F4;
+      --surface-raised: #EFEDEB;
+      --text-primary: #1C1917;
+      --text-secondary: #57534E;
+      --text-tertiary: #78716C;
+      --border-subtle: #E7E5E4;
+      --border-medium: #D6D3D1;
+      --primary: #78716C;
+      --primary-hover: #57534E;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #1C1917;
+      --surface: #292524;
+      --surface-raised: #383431;
+      --text-primary: #FAFAF9;
+      --text-secondary: #D6D3D1;
+      --text-tertiary: #A8A29E;
+      --border-subtle: #44403C;
+      --border-medium: #57534E;
+      --primary: #A8A29E;
+      --primary-hover: #D6D3D1;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-primary);
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .font-serif { font-family: 'Libre Baskerville', Georgia, serif; }
+    .font-mono { font-family: 'Source Code Pro', Consolas, monospace; }
+    .ts-box {
+      border: 1px solid var(--border-subtle);
+      border-radius: 0px;
+    }
+    .ts-input {
+      background-color: var(--bg);
+      border: 1px solid var(--border-medium);
+      border-radius: 0px;
+      color: var(--text-primary);
+    }
+    .ts-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .ts-btn-primary {
+      background-color: var(--primary);
+      color: var(--bg);
+      border: 1px solid var(--primary);
+      border-radius: 0px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .ts-btn-primary:hover { background-color: var(--primary-hover); }
+    .ts-btn-secondary {
+      background-color: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-medium);
+      border-radius: 0px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .ts-btn-secondary:hover {
+      background-color: var(--surface);
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .bg-\\[\\#FAFAF9\\] { background-color: var(--bg) !important; }
+    [data-theme="dark"] .bg-\\[\\#F5F5F4\\] { background-color: var(--surface) !important; }
+    [data-theme="dark"] .text-\\[\\#1C1917\\] { color: var(--text-primary) !important; }
+    [data-theme="dark"] .text-\\[\\#57534E\\] { color: var(--text-secondary) !important; }
+    [data-theme="dark"] .text-\\[\\#78716C\\] { color: var(--text-tertiary) !important; }
+    [data-theme="dark"] .border-\\[\\#E7E5E4\\] { border-color: var(--border-subtle) !important; }
+    [data-theme="dark"] .divide-\\[\\#E7E5E4\\] > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-subtle) !important; }
+  </style>
+</head>
+<body class="min-h-screen antialiased p-4 sm:p-8">
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- Top Header -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E7E5E4]">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 border border-[#D6D3D1] text-[#78716C]">GEMINI WEB2API</span>
+          <span class="text-xs font-mono text-[#78716C]">Multi-Account Cookie Pool</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-[#1C1917]">Gemini Pool Gateway</h1>
+        <p class="text-xs text-[#57534E] mt-1 font-serif italic">Automatic Cookie Keepalive, Least-Recently-Used Load Balancing, OpenAI Compatible</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="button" id="themeToggle" onclick="toggleTheme()" class="w-10 h-10 ts-box flex items-center justify-center p-2.5 transition-colors" title="Toggle theme">
+          <svg id="themeIconSun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m12.73 12.73 1.41 1.41M2 12h2m16 0h2m-13.66 5.66-1.41 1.41m12.73-12.73-1.41 1.41"/></svg>
+          <svg id="themeIconMoon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        </button>
+        <div id="authStatusContainer" class="flex items-center gap-2"></div>
+      </div>
+    </header>
+
+    <!-- Login Card (shown when unauthenticated) -->
+    <div id="loginCard" class="max-w-md mx-auto ts-box bg-[#F5F5F4] p-6 space-y-4">
+      <h2 class="text-base font-serif font-bold text-[#1C1917]">Gateway Access</h2>
+      <p class="text-xs text-[#57534E]">Masukkan password master admin untuk mengelola cookie pool.</p>
+      <div class="space-y-3">
+        <input type="password" id="adminPasswordInput" placeholder="Password Admin" class="w-full p-2.5 ts-input text-xs font-mono" onkeydown="if(event.key==='Enter') doLogin()">
+        <button onclick="doLogin()" class="ts-btn-primary w-full py-2.5 text-xs">Unlock Pool Manager</button>
+      </div>
+      <div id="loginError" class="text-xs text-[#DC2626] hidden"></div>
+    </div>
+
+    <!-- Main Dashboard View (shown when authenticated) -->
+    <main id="mainDashboard" class="space-y-8 hidden">
+      
+      <!-- Bento Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 ts-box bg-[#F5F5F4]">
+          <div class="text-[11px] font-mono text-[#78716C] uppercase tracking-wider">Total Accounts</div>
+          <div id="statTotal" class="text-2xl font-serif font-bold text-[#1C1917] mt-1">0</div>
+        </div>
+        <div class="p-4 ts-box bg-[#F5F5F4]">
+          <div class="text-[11px] font-mono text-[#78716C] uppercase tracking-wider">Active Pool</div>
+          <div id="statActive" class="text-2xl font-serif font-bold text-[#65A30D] mt-1">0</div>
+        </div>
+        <div class="p-4 ts-box bg-[#F5F5F4]">
+          <div class="text-[11px] font-mono text-[#78716C] uppercase tracking-wider">Keepalive Status</div>
+          <div class="text-xs font-mono text-[#1C1917] mt-2">Every 30m Auto-Touch</div>
+        </div>
+        <div class="p-4 ts-box bg-[#F5F5F4]">
+          <div class="text-[11px] font-mono text-[#78716C] uppercase tracking-wider">OpenAI Endpoint</div>
+          <div class="text-xs font-mono text-[#1C1917] mt-2 truncate">/v1/chat/completions</div>
+        </div>
+      </div>
+
+      <!-- Action & Table -->
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#F5F5F4] p-4 ts-box">
+          <div>
+            <h2 class="text-sm font-serif font-bold text-[#1C1917]">Google Gemini Web Accounts</h2>
+            <p class="text-xs text-[#57534E] mt-0.5">Rotasi otomatis Least-Recently-Used (LRU) dengan penjaga sesi aktif.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="triggerKeepalive()" class="ts-btn-secondary px-3 py-2 text-xs flex items-center gap-1.5" title="Kirim probe ke Google untuk menyegarkan cookie sekarang">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Keepalive Now
+            </button>
+            <button onclick="openAddModal()" class="ts-btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Cookie Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Accounts Table -->
+        <div class="overflow-x-auto ts-box bg-[#FAFAF9]">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#F5F5F4] text-[#57534E] uppercase border-b border-[#E7E5E4] font-mono text-[11px] tracking-wider">
+              <tr>
+                <th class="p-3.5 pl-4">Account Email / Label</th>
+                <th class="p-3.5">Auth User</th>
+                <th class="p-3.5">Status</th>
+                <th class="p-3.5">Last Used</th>
+                <th class="p-3.5">Last Keep-Alive</th>
+                <th class="p-3.5 pr-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="accountTableBody" class="divide-y divide-[#E7E5E4] font-mono">
+              <tr><td colspan="6" class="p-6 text-center text-[#A8A29E]">Loading accounts...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Integration Guide Card -->
+      <div class="p-5 ts-box bg-[#F5F5F4] space-y-3">
+        <h3 class="text-xs font-mono uppercase tracking-wider text-[#78716C] font-semibold">Integrasi ke Client / Proxy</h3>
+        <p class="text-xs text-[#57534E] leading-relaxed">
+          Gateway ini menyediakan endpoint standar OpenAI. Anda bisa langsung menggunakannya di <strong>Hermes Agent</strong>, <strong>LiteLLM</strong>, atau <strong>Swave LiteProxy</strong>:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono bg-[#FAFAF9] p-3 border border-[#E7E5E4]">
+          <div><span class="text-[#78716C]">Base URL:</span> http://127.0.0.1:8095/v1</div>
+          <div><span class="text-[#78716C]">Model Utama:</span> gemini-4-argon / gemini-3.8-flash</div>
+          <div><span class="text-[#78716C]">Auth Header:</span> Bearer (sesuai config atau token admin)</div>
+          <div><span class="text-[#78716C]">Streaming:</span> Full SSE (stream: true didukung)</div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Add Account Modal -->
+  <div id="addModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#FAFAF9] p-6 max-w-lg w-full ts-box space-y-4 shadow-xl border border-[#D6D3D1]">
+      <div class="flex justify-between items-center border-b border-[#E7E5E4] pb-3">
+        <h3 class="text-sm font-serif font-bold text-[#1C1917]">Tambah Akun Cookie Google Gemini</h3>
+        <button onclick="closeAddModal()" class="text-[#A8A29E] hover:text-[#1C1917] text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Email Akun Google *</label>
+          <input type="email" id="modalEmail" placeholder="contoh: user@gmail.com" class="w-full p-2.5 ts-input text-xs font-mono">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Label / Nama Akun (Opsional)</label>
+          <input type="text" id="modalLabel" placeholder="contoh: Akun Pribadi Gemini Pro" class="w-full p-2.5 ts-input text-xs">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Auth User Index (default: 0)</label>
+          <input type="text" id="modalAuthUser" value="0" placeholder="0 untuk profil pertama, 1 untuk profil kedua" class="w-full p-2.5 ts-input text-xs font-mono">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Paste Raw Cookie String *</label>
+          <textarea id="modalCookie" rows="5" placeholder="Paste seluruh cookie dari gemini.google.com (F12 Application -> Cookies atau dari ekstensi cookie sync)..." class="w-full p-2.5 ts-input text-xs font-mono"></textarea>
+          <p class="text-[10px] text-[#78716C] mt-1">Cookie wajib memuat <code>SAPISID</code> atau <code>__Secure-3PAPISID</code>. Sistem akan otomatis memvalidasi ke Google dan mengambil token XSRF saat disimpan.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-[#E7E5E4]">
+        <button onclick="closeAddModal()" class="ts-btn-secondary px-4 py-2 text-xs">Batal</button>
+        <button onclick="submitAccount()" id="submitBtn" class="ts-btn-primary px-4 py-2 text-xs">Simpan & Verifikasi</button>
+      </div>
+      <div id="modalError" class="text-xs text-[#DC2626] hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem("gemini_pool_token") || "";
+
+    function toggleTheme() {
+      const cur = document.documentElement.dataset.theme;
+      const next = cur === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("gemini_pool_theme", next);
+      updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+      const isDark = document.documentElement.dataset.theme === "dark";
+      document.getElementById("themeIconSun").classList.toggle("hidden", !isDark);
+      document.getElementById("themeIconMoon").classList.toggle("hidden", isDark);
+    }
+
+    async function doLogin() {
+      const pwd = document.getElementById("adminPasswordInput").value.trim();
+      const errEl = document.getElementById("loginError");
+      if (!pwd) return;
+      try {
+        const res = await fetch("/api/auth/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (data.success) {
+          adminToken = data.token;
+          localStorage.setItem("gemini_pool_token", adminToken);
+          errEl.classList.add("hidden");
+          initApp();
+        } else {
+          errEl.textContent = data.error || "Password salah.";
+          errEl.classList.remove("hidden");
+        }
+      } catch (e) {
+        errEl.textContent = "Koneksi gagal: " + e.message;
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    function doLogout() {
+      adminToken = "";
+      localStorage.removeItem("gemini_pool_token");
+      location.reload();
+    }
+
+    async function loadAccounts() {
+      try {
+        const res = await fetch("/api/accounts", {
+          headers: { "Authorization": "Bearer " + adminToken }
+        });
+        if (res.status === 401) {
+          doLogout();
+          return;
+        }
+        const data = await res.json();
+        renderAccounts(data.accounts || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderAccounts(accounts) {
+      const tbody = document.getElementById("accountTableBody");
+      document.getElementById("statTotal").textContent = accounts.length;
+      document.getElementById("statActive").textContent = accounts.filter(a => a.is_active && a.status === 'active').length;
+
+      if (!accounts.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-[#A8A29E]">Belum ada akun Google di pool. Klik tombol "+ Add Cookie Account" untuk menambahkan.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = accounts.map(a => {
+        const isActive = a.is_active && a.status === 'active';
+        const badge = isActive
+          ? '<span class="text-[#3F6212] bg-[#F0FDF4] px-2 py-0.5 border border-[#BBF7D0] inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#65A30D]"></span> Active</span>'
+          : '<span class="text-[#DC2626] bg-[#FEF2F2] px-2 py-0.5 border border-[#FECACA] inline-flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#DC2626]"></span> ' + (a.status === 'error' ? 'Error' : 'Disabled') + '</span>';
+        
+        const lastUsed = a.last_used_at ? new Date(a.last_used_at * 1000).toLocaleTimeString() : 'Never';
+        const lastKeepalive = a.last_keepalive_at ? new Date(a.last_keepalive_at * 1000).toLocaleTimeString() : 'Never';
+
+        return `
+          <tr class="hover:bg-[#F5F5F4] transition-colors">
+            <td class="p-3.5 pl-4">
+              <div class="font-bold text-[#1C1917]">${escapeHtml(a.email)}</div>
+              <div class="text-[11px] text-[#78716C]">${escapeHtml(a.label || a.email)}</div>
+            </td>
+            <td class="p-3.5 text-[#57534E]">/u/${a.auth_user || 0}</td>
+            <td class="p-3.5">${badge}</td>
+            <td class="p-3.5 text-[#57534E] text-[11px]">${lastUsed}</td>
+            <td class="p-3.5 text-[#57534E] text-[11px]">${lastKeepalive}</td>
+            <td class="p-3.5 pr-4 text-right space-x-3">
+              <button onclick="openUpdateCookieModal('${escapeHtml(a.email)}')" class="text-xs text-[#2563EB] dark:text-[#60A5FA] hover:underline font-semibold">
+                Update Cookie
+              </button>
+              <button onclick="toggleAccount('${escapeHtml(a.email)}', ${!a.is_active})" class="text-xs ${a.is_active ? 'text-[#CA8A04]' : 'text-[#65A30D]'} hover:underline font-semibold">
+                ${a.is_active ? 'Disable' : 'Enable'}
+              </button>
+              <button onclick="deleteAccount('${escapeHtml(a.email)}')" class="text-xs text-[#DC2626] hover:underline font-semibold">
+                Delete
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      lucide.createIcons();
+    }
+
+    async function toggleAccount(email, isActive) {
+      await fetch("/api/accounts/toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + adminToken },
+        body: JSON.stringify({ email, is_active: isActive })
+      });
+      loadAccounts();
+    }
+
+    async function deleteAccount(email) {
+      if (!confirm(`Hapus akun ${email} dari pool?`)) return;
+      await fetch("/api/accounts/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + adminToken },
+        body: JSON.stringify({ email })
+      });
+      loadAccounts();
+    }
+
+    async function triggerKeepalive() {
+      const res = await fetch("/api/accounts/keepalive-now", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + adminToken }
+      });
+      const data = await res.json();
+      alert("Proses keep-alive dijalankan di background untuk semua akun!");
+      setTimeout(loadAccounts, 2000);
+    }
+
+    function openAddModal() {
+      document.getElementById("modalEmail").value = "";
+      document.getElementById("modalLabel").value = "";
+      document.getElementById("modalAuthUser").value = "0";
+      document.getElementById("modalCookie").value = "";
+      document.getElementById("modalError").classList.add("hidden");
+      document.getElementById("addModal").classList.remove("hidden");
+    }
+
+    function closeAddModal() {
+      document.getElementById("addModal").classList.add("hidden");
+    }
+
+    async function submitAccount() {
+      const email = document.getElementById("modalEmail").value.trim();
+      const label = document.getElementById("modalLabel").value.trim();
+      const auth_user = document.getElementById("modalAuthUser").value.trim() || "0";
+      const cookie = document.getElementById("modalCookie").value.trim();
+      const errEl = document.getElementById("modalError");
+      const btn = document.getElementById("submitBtn");
+
+      if (!email || !cookie) {
+        errEl.textContent = "Email dan Cookie wajib diisi!";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Memverifikasi ke Google...";
+      errEl.classList.add("hidden");
+
+      try {
+        const res = await fetch("/api/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + adminToken },
+          body: JSON.stringify({ email, label, auth_user, cookie })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeAddModal();
+          loadAccounts();
+        } else {
+          errEl.textContent = data.error || "Gagal menyimpan akun.";
+          errEl.classList.remove("hidden");
+        }
+      } catch (e) {
+        errEl.textContent = "Error: " + e.message;
+        errEl.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Simpan & Verifikasi";
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function initApp() {
+      if (adminToken) {
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("mainDashboard").classList.remove("hidden");
+        document.getElementById("authStatusContainer").innerHTML = `
+          <span class="text-xs font-mono text-[#65A30D] bg-[#F0FDF4] px-2.5 py-1 border border-[#BBF7D0] flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#65A30D]"></span> Authenticated
+          </span>
+          <button onclick="doLogout()" class="ts-btn-secondary px-3 py-1 text-xs">Sign Out</button>
+        `;
+        loadAccounts();
+        setInterval(loadAccounts, 15000);
+      } else {
+        document.getElementById("loginCard").classList.remove("hidden");
+        document.getElementById("mainDashboard").classList.add("hidden");
+        document.getElementById("authStatusContainer").innerHTML = "";
+      }
+      lucide.createIcons();
+    }
+
+    window.onload = () => {
+      const savedTheme = localStorage.getItem("gemini_pool_theme") || "light";
+      document.documentElement.dataset.theme = savedTheme;
+      updateThemeIcon();
+      initApp();
+    };
+  </script>
+
+  <!-- Update Cookie Modal -->
+  <div id="updateCookieModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-[#FAFAF9] p-6 max-w-lg w-full ts-box space-y-4 shadow-xl border border-[#D6D3D1]">
+      <div class="flex justify-between items-center border-b border-[#E7E5E4] pb-3">
+        <h3 class="text-sm font-serif font-bold text-[#1C1917]">Update Cookie Akun</h3>
+        <button onclick="closeUpdateCookieModal()" class="text-[#A8A29E] hover:text-[#1C1917] text-xl leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Email Akun</label>
+          <input type="text" id="updateModalEmail" readonly class="w-full p-2.5 ts-input text-xs font-mono bg-[#F5F5F4] opacity-80 cursor-not-allowed">
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-[#57534E] mb-1">Paste New Raw Cookie String *</label>
+          <textarea id="updateModalCookie" rows="6" placeholder="Paste cookie terbaru dari DevTools Network / Cookie-Editor..." class="w-full p-2.5 ts-input text-xs font-mono"></textarea>
+          <p class="text-[10px] text-[#78716C] mt-1">Sistem akan langsung memverifikasi cookie baru ke Google dan mengembalikan status akun menjadi <strong>Active</strong>.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3 border-t border-[#E7E5E4]">
+        <button onclick="closeUpdateCookieModal()" class="ts-btn-secondary px-4 py-2 text-xs">Batal</button>
+        <button onclick="submitUpdateCookie()" id="updateSubmitBtn" class="ts-btn-primary px-4 py-2 text-xs">Perbarui & Aktifkan</button>
+      </div>
+      <div id="updateModalError" class="text-xs text-[#DC2626] hidden"></div>
+    </div>
+  </div>
+
+<script>
+
+    function openUpdateCookieModal(email) {
+      document.getElementById("updateModalEmail").value = email;
+      document.getElementById("updateModalCookie").value = "";
+      document.getElementById("updateModalError").classList.add("hidden");
+      document.getElementById("updateCookieModal").classList.remove("hidden");
+    }
+
+    function closeUpdateCookieModal() {
+      document.getElementById("updateCookieModal").classList.add("hidden");
+    }
+
+    async function submitUpdateCookie() {
+      const email = document.getElementById("updateModalEmail").value.trim();
+      const cookie = document.getElementById("updateModalCookie").value.trim();
+      const errEl = document.getElementById("updateModalError");
+      const btn = document.getElementById("updateSubmitBtn");
+
+      if (!cookie) {
+        errEl.textContent = "Cookie baru wajib diisi!";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Memverifikasi...";
+      errEl.classList.add("hidden");
+
+      try {
+        const res = await fetch("/api/accounts/update-cookie", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + adminToken },
+          body: JSON.stringify({ email, cookie })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeUpdateCookieModal();
+          loadAccounts();
+        } else {
+          errEl.textContent = data.error || "Gagal memperbarui cookie.";
+          errEl.classList.remove("hidden");
+        }
+      } catch (e) {
+        errEl.textContent = "Error: " + e.message;
+        errEl.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Perbarui & Aktifkan";
+      }
+    }
+
+</script>
+</body>
+</html>

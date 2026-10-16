@@ -1,0 +1,14 @@
+services:
+  gemini-web-pool:
+    build: .
+    container_name: gemini-web-pool
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8095:8095"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=8095
+      - HOST=0.0.0.0
+      - GEMINI_POOL_DB=/app/data/gemini_pool.db
+      - ADMIN_PASSWORD=ChangeMeWithStrongPassword

@@ -169,29 +169,49 @@ def messages_to_prompt(messages: list, tools: list = None, tool_choice=None) -> 
 
 
 def parse_tool_calls(text: str) -> tuple:
-    """Extract tool_call blocks. Returns (clean_text, tool_calls_list)."""
+    """Extract tool_call blocks with multi-pattern detection for Agentic AI."""
     tool_calls = []
-    pattern = r'```tool_call\s*\n(.*?)\n```'
-    clean_parts = []
-    last_end = 0
-    for m in re.finditer(pattern, text, re.DOTALL):
-        clean_parts.append(text[last_end:m.start()])
-        last_end = m.end()
-        try:
-            data = json.loads(m.group(1).strip())
-            tool_calls.append({
-                "id": f"call_{uuid.uuid4().hex[:8]}",
-                "type": "function",
-                "function": {
-                    "name": data["name"],
-                    "arguments": json.dumps(data.get("arguments", {}), ensure_ascii=False),
-                },
-            })
-        except (json.JSONDecodeError, KeyError):
-            pass
-    clean_parts.append(text[last_end:])
-    clean = "".join(clean_parts).strip()
-    return clean, tool_calls
+    clean_text = text
+
+    patterns = [
+        r'```(?:tool_call|function_call|json)?\s*\n\s*(\{\s*"(?:name|function)"\s*:\s*".*?\}\s*)\n```',
+        r'```(?:tool_call|function_call)\s*\n(.*?)\n```',
+        r'<tool_call>\s*(.*?)\s*</tool_call>',
+        r'\[(?:TOOL_CALL|FUNCTION_CALL)\]\s*(\{.*?\})',
+    ]
+
+    for pat in patterns:
+        for m in re.finditer(pat, clean_text, re.DOTALL):
+            raw_block = m.group(1).strip()
+            try:
+                data = json.loads(raw_block)
+                fn_name = data.get("name") or data.get("function")
+                if not fn_name and "call" in data:
+                    fn_name = data["call"]
+                
+                if fn_name and isinstance(fn_name, str):
+                    args = data.get("arguments") or data.get("args") or data.get("parameters") or {}
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            pass
+                    args_str = json.dumps(args, ensure_ascii=False) if isinstance(args, (dict, list)) else str(args)
+                    
+                    tool_calls.append({
+                        "id": f"call_{uuid.uuid4().hex[:8]}",
+                        "type": "function",
+                        "function": {
+                            "name": fn_name,
+                            "arguments": args_str,
+                        },
+                    })
+                    # Remove the tool call block from clean text
+                    clean_text = clean_text.replace(m.group(0), "").strip()
+            except Exception:
+                pass
+
+    return clean_text, tool_calls
 
 
 # ─── Google Native API helpers ─────────────────────────────────────────────────

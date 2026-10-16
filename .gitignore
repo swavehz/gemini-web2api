@@ -7,3 +7,13 @@ cookie.json
 .idea
 .DS_Store
 gemini-auth.json
+
+# Pool data & cookies
+data/
+*.db
+*.sqlite
+cookie.txt
+config.json
+.env
+__pycache__/
+*.py[cod]
