@@ -1,78 +1,76 @@
 # Gemini Web2API (Multi-Account Pool Edition)
 
-Fork yang disempurnakan dari [Sophomoresty/gemini-web2api](https://github.com/Sophomoresty/gemini-web2api) untuk kebutuhan **Enterprise & Autonomous AI Agents (Hermes, CrewAI, AutoGen, LiteLLM)** dengan dukungan **Multi-Account Cookie Pool, Least-Recently-Used (LRU) Load Balancing, Persistent Session Keep-Alive, dan Web UI Manajemen Akun**.
+An enhanced fork of [Sophomoresty/gemini-web2api](https://github.com/Sophomoresty/gemini-web2api) tailored for **Enterprise & Autonomous AI Agents (Hermes, CrewAI, AutoGen, LiteLLM)** with native support for **Multi-Account Cookie Pooling, Least-Recently-Used (LRU) Load Balancing, Persistent Session Keep-Alive, Web UI Management, and Full OpenAI-Compatible Tool Calling**.
 
 ---
 
-## 🌟 Fitur Baru pada Fork Ini
+## 🌟 What's New in This Fork
 
-1. **Multi-Account Cookie Pool (SQLite)**:
-   - Tambahkan banyak akun Google Gemini dalam satu instance.
-   - Penamaan akun dengan format email & label kustom untuk memudahkan identifikasi.
-   - Rotasi otomatis *Least-Recently-Used (LRU)* atau Round-Robin di setiap request.
-   - Otomatis melewati (failover) akun yang terkena limit/error ke akun aktif berikutnya.
+1. **Multi-Account Cookie Pool (SQLite Backend)**:
+   - Connect multiple Google Gemini accounts under a single endpoint.
+   - Label and name each account by email for seamless identification.
+   - Intelligent *Least-Recently-Used (LRU)* or Round-Robin request load balancing.
+   - Automatic failover: accounts encountering rate limits or quota errors are temporarily bypassed in favor of active accounts.
 
-2. **Autonomous Keep-Alive Daemon (Mencegah Cookie Mati)**:
-   - Daemon background otomatis mengirim probe setiap **30 menit** ke endpoint Google dengan header signature `SAPISIDHASH`.
-   - Mengambil rotasi token `__Secure-1PSIDTS` dan `__Secure-3PSIDTS` baru secara berkala sehingga session login tetap hidup tanpa perlu copy-paste cookie berulang kali.
+2. **Autonomous Keep-Alive Daemon (Prevents Cookie Expiration)**:
+   - A built-in background daemon touches the Google Gemini session endpoint every **30 minutes** using dynamic `SAPISIDHASH` authorization headers.
+   - Automatically catches and rotates fresh `__Secure-1PSIDTS` and `__Secure-3PSIDTS` authentication cookies to keep sessions continuously active.
 
-3. **Web UI Manajemen Akun (ThoughtStream Design System)**:
-   - Antarmuka web mandiri yang bersih, tanpa border-radius (0px), palet warm neutral/charcoal, serta dukungan Dark/Light mode instan.
-   - Dilindungi **Master Password Admin** (`ADMIN_PASSWORD`).
-   - Formulir tambah akun & fitur **Update Cookie** untuk memperbarui cookie akun kapan saja tanpa menghapus history.
-   - Monitoring live status akun, timestamp terakhir digunakan (*Last Used*), dan timestamp keep-alive.
+3. **Modern Web UI Dashboard (ThoughtStream Editorial Design)**:
+   - Clean, brutalist web interface (0px border-radius, warm neutral palette, instant Dark/Light mode toggle).
+   - Protected by **Master Admin Password** (`ADMIN_PASSWORD`).
+   - One-click **Update Cookie** action to refresh expired accounts without losing historical tracking.
+   - Real-time account status indicators, last-used timestamps, and keep-alive health logs.
 
-4. **Full Agentic Tool Calling (OpenAI Specification)**:
-   - Parsing otomatis parameter fungsi / function call (`tool_calls` dan `finish_reason: "tool_calls"`).
-   - Mendukung loop multi-turn percakapan agent (`user` -> `assistant tool_calls` -> `tool result` -> `assistant answer`).
-   - Mendukung SSE Streaming (`stream: true`) maupun standard non-streaming.
-
----
-
-## 🔒 Panduan Keamanan (Security First)
-
-1. **JANGAN Expose Port Backend ke Internet Publik**:
-   - Di `docker-compose.yml`, container dibatasi hanya mengikat localhost (`127.0.0.1`), subnet Docker bridge (`172.17.0.1`), atau reverse proxy.
-   - Jika ingin diakses melalui domain publik, wajib menggunakan Reverse Proxy (Nginx / Cloudflare Tunnel) dengan proteksi SSL dan autentikasi.
-2. **Kerahasiaan Cookie**:
-   - Cookie Google menyimpan akses penuh ke akun Google Anda. Database `gemini_pool.db` disimpan di direktori `./data` dengan permission ketat (`chmod 700`).
-   - Selalu atur `ADMIN_PASSWORD` yang kuat di environment variable sebelum menjalankan container.
-3. **Penyaringan Kredensial**:
-   - Jangan pernah melakukan commit file `cookie.txt`, `gemini_pool.db`, atau kredensial rahasia ke repositori Git.
+4. **Agentic Tool Calling (OpenAI Specification)**:
+   - Native multi-pattern function calling parser (`tool_calls` and `finish_reason: "tool_calls"`).
+   - Supports multi-turn agent execution loops (`user` -> `assistant tool_calls` -> `tool result` -> `assistant final response`).
+   - Full support for both Server-Sent Events (SSE) Streaming (`stream: true`) and standard blocking responses.
 
 ---
 
-## 📋 Panduan untuk User: Cara Mengambil Cookie dari Google Gemini
+## 🔒 Security Best Practices
 
-User tidak perlu mengedit file konfigurasi di server. Cukup buka Web UI dan masukkan cookie melalui form.
-
-### Langkah Cepat Mengambil Cookie (10 Detik):
-
-#### Cara 1: Menggunakan DevTools Network (Tanpa Install Ekstensi)
-1. Buka browser dan buka [https://gemini.google.com](https://gemini.google.com). Pastikan Anda sudah login.
-2. Tekan tombol **F12** (atau klik kanan -> **Inspect**) -> pilih tab **Network**.
-3. Di kotak filter/search tab Network, ketik `StreamGenerate` atau `batchexecute`.
-4. Kirim chat apa saja di Gemini (misal ketik `halo`).
-5. Klik baris request yang muncul di tab Network.
-6. Buka tab **Headers** di panel kanan, scroll ke bawah ke bagian **Request Headers**.
-7. Cari baris **`Cookie:`**, klik kanan pada teks nilainya -> pilih **Copy value**.
-8. Buka Web UI Gemini Pool Gateway, klik **+ Add Cookie Account**, lalu paste ke kolom **Paste Raw Cookie String**.
-
-#### Cara 2: Menggunakan Ekstensi Browser "Cookie-Editor"
-1. Pasang ekstensi **Cookie-Editor** di Chrome / Firefox.
-2. Buka tab [https://gemini.google.com](https://gemini.google.com).
-3. Klik ikon Cookie-Editor di browser -> klik tombol **Export** -> pilih **Header String**.
-4. Paste string tersebut langsung ke Web UI.
-
-> **Catatan Auth User Index**:
-> - Akun profil pertama (default): `auth_user: 0`
-> - Jika menggunakan fitur switch account Google di satu browser (`gemini.google.com/u/1/app`): isi `auth_user: 1`.
+1. **Cookie Confidentiality**:
+   - Google authentication cookies grant access to the corresponding Google account session.
+   - The SQLite database `gemini_pool.db` is stored inside the `./data` directory with strict directory permissions (`chmod 700`).
+   - Always configure a strong, unique `ADMIN_PASSWORD` in your environment before deploying.
+2. **Credential Sanitization**:
+   - The repository includes a preconfigured `.gitignore` to ensure `cookie.txt`, SQLite databases (`*.db`), and local configuration files are never committed to version control.
 
 ---
 
-## 🚀 Cara Menjalankan dengan Docker Compose
+## 📋 User Guide: How to Retrieve Your Google Gemini Cookies
 
-### 1. Konfigurasi `docker-compose.yml`
+End users do not need access to the server or command line. Simply open the Web UI and paste your cookies into the dashboard.
+
+### Quick Steps to Extract Cookies (10 Seconds):
+
+#### Option 1: Browser DevTools Network Tab (No Extensions Needed)
+1. Open your browser and navigate to [https://gemini.google.com](https://gemini.google.com). Ensure you are logged in.
+2. Press **F12** (or right-click anywhere and select **Inspect**) -> switch to the **Network** tab.
+3. In the filter/search box, type `StreamGenerate` or `batchexecute`.
+4. Send any short message in Gemini (e.g., type `hello`).
+5. Click on the corresponding request in the Network list.
+6. In the right panel, open the **Headers** tab and scroll down to the **Request Headers** section.
+7. Locate the **`Cookie:`** line, right-click its value -> select **Copy value**.
+8. Open the Gemini Pool Gateway Web UI, click **+ Add Cookie Account**, and paste into **Paste Raw Cookie String**.
+
+#### Option 2: Browser Extension "Cookie-Editor"
+1. Install the **Cookie-Editor** extension for Chrome or Firefox.
+2. Open [https://gemini.google.com](https://gemini.google.com).
+3. Click the Cookie-Editor icon in your toolbar -> click **Export** at the bottom -> select **Header String**.
+4. Paste the copied string directly into the Web UI.
+
+> **Auth User Index Note**:
+> - Default / Primary account profile: `auth_user: 0`
+> - If you use multiple Google profiles in the same browser (`gemini.google.com/u/1/app`): enter `auth_user: 1`.
+
+---
+
+## 🚀 Deployment (Docker Compose)
+
+### 1. `docker-compose.yml`
 ```yaml
 services:
   gemini-web-pool:
@@ -80,39 +78,39 @@ services:
     container_name: gemini-web-pool
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8095:8095" 
+      - "0.0.0.0:8095:8095"
     volumes:
       - ./data:/app/data
     environment:
       - PORT=8095
       - HOST=0.0.0.0
       - GEMINI_POOL_DB=/app/data/gemini_pool.db
-      - ADMIN_PASSWORD=GantiDenganPasswordKuatAnda
+      - ADMIN_PASSWORD=ChangeMeWithStrongPassword
 ```
 
-### 2. Build & Jalankan
+### 2. Build & Start
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Akses Dashboard
-Buka `http://localhost:8095` di browser Anda, masukkan `ADMIN_PASSWORD`, dan mulai tambahkan akun.
+### 3. Open the Dashboard
+Navigate to `http://localhost:8095` in your browser, enter your `ADMIN_PASSWORD`, and begin adding accounts to the pool.
 
 ---
 
-## 🔌 Contoh Integrasi Client (OpenAI SDK / LiteLLM / Hermes Agent)
+## 🔌 Client Integration Example (OpenAI Python SDK)
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    base_url="http://127.0.0.1:8095/v1",
-    api_key="GantiDenganPasswordKuatAnda" # atau Bearer token Anda
+    base_url="http://localhost:8095/v1",
+    api_key="ChangeMeWithStrongPassword" # or your configured Bearer token
 )
 
 response = client.chat.completions.create(
     model="gemini-4-argon",
-    messages=[{"role": "user", "content": "Halo Gemini!"}],
+    messages=[{"role": "user", "content": "Hello Gemini!"}],
     stream=False
 )
 print(response.choices[0].message.content)
@@ -120,5 +118,5 @@ print(response.choices[0].message.content)
 
 ---
 
-## 📄 Lisensi
-MIT License - Melanjutkan lisensi proyek asli oleh Sophomoresty.
+## 📄 License
+MIT License - Continuing the original open-source work by Sophomoresty.
