@@ -32,7 +32,7 @@ Fork yang disempurnakan dari [Sophomoresty/gemini-web2api](https://github.com/So
 ## 🔒 Panduan Keamanan (Security First)
 
 1. **JANGAN Expose Port Backend ke Internet Publik**:
-   - Di `docker-compose.yml`, container dibatasi hanya mengikat localhost (`127.0.0.1`), subnet Docker bridge (`172.17.0.1`), atau jaringan VPN privat (Tailscale `100.x.y.z`).
+   - Di `docker-compose.yml`, container dibatasi hanya mengikat localhost (`127.0.0.1`), subnet Docker bridge (`172.17.0.1`), atau reverse proxy.
    - Jika ingin diakses melalui domain publik, wajib menggunakan Reverse Proxy (Nginx / Cloudflare Tunnel) dengan proteksi SSL dan autentikasi.
 2. **Kerahasiaan Cookie**:
    - Cookie Google menyimpan akses penuh ke akun Google Anda. Database `gemini_pool.db` disimpan di direktori `./data` dengan permission ketat (`chmod 700`).
@@ -80,8 +80,7 @@ services:
     container_name: gemini-web-pool
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8095:8095" # Akses lokal
-      # - "100.x.y.z:8095:8095" # (Opsional) Akses VPN privat / Tailscale
+      - "0.0.0.0:8095:8095" 
     volumes:
       - ./data:/app/data
     environment:
