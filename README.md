@@ -68,13 +68,29 @@ End users do not need access to the server or command line. Simply open the Web 
 
 ---
 
+## ⚡ One-Liner Quick Run (No Clone / No Build Needed)
+
+Run instantly without cloning the repo:
+
+```bash
+docker run -d \
+  --name gemini-web-pool \
+  --restart unless-stopped \
+  -p 8095:8095 \
+  -v $(pwd)/data:/app/data \
+  -e ADMIN_PASSWORD=ChangeMeWithStrongPassword \
+  ghcr.io/swavehz/gemini-web2api:latest
+```
+
+---
+
 ## 🚀 Deployment (Docker Compose)
 
 ### 1. `docker-compose.yml`
 ```yaml
 services:
   gemini-web-pool:
-    build: .
+    image: ghcr.io/swavehz/gemini-web2api:latest
     container_name: gemini-web-pool
     restart: unless-stopped
     ports:
@@ -90,7 +106,7 @@ services:
 
 ### 2. Build & Start
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 ### 3. Open the Dashboard

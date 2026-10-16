@@ -1,6 +1,6 @@
 services:
   gemini-web-pool:
-    build: .
+    image: ghcr.io/swavehz/gemini-web2api:latest
     container_name: gemini-web-pool
     restart: unless-stopped
     ports:
